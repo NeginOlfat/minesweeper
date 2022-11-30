@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StatusBar, SafeAreaView, Pressable, Text, TouchableOpacity } from "react-native";
 import styled from "styled-components/native";
+import { useDispatch, useSelector } from "react-redux";
 
+import { startGame } from "../actions/action";
 import { Board } from "../components/board/board";
 import { Spacer } from "../components/utility/spacer";
 import { colors } from "../theme/colors";
@@ -66,7 +68,11 @@ const Counter = styled.View`
 export const Game = ({ navigation, route }) => {
 
     const difficulty = route.params.difficulty;
-    console.log(difficulty)
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        dispatch(startGame(difficulty))
+    }, []);
 
     return (
         <Container>

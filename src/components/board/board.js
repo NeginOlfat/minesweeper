@@ -1,15 +1,13 @@
 import React from "react";
 import { View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+
 import { Cell } from "./cell";
 
 
 export const Board = () => {
 
-    const cells = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]]
+    const cells = useSelector(state => state.reducer.cells)
 
     return (
         <View>

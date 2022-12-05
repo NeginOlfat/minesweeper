@@ -13,7 +13,6 @@ import { GameStatus } from "../utils/types";
 const Container = styled(SafeAreaView)`
     flex: 1;
     backgroundColor: ${colors.PINK_500};
-    ${StatusBar.currentHeight && `margin-top: ${StatusBar.currentHeight}px`};
 `;
 
 const Header = styled.View`

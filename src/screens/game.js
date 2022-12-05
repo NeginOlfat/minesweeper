@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { StatusBar, SafeAreaView, Pressable, Text, TouchableOpacity } from "react-native";
 import styled from "styled-components/native";
 import { useDispatch, useSelector } from "react-redux";
@@ -66,6 +66,9 @@ const Counter = styled.View`
 `;
 
 
+const formatTime = (time) => (time < 10) ? `0${time}` : time;
+
+
 export const Game = ({ navigation, route }) => {
 
     const difficulty = route.params.difficulty;
@@ -78,9 +81,19 @@ export const Game = ({ navigation, route }) => {
     const gameStatus = useSelector(state => state.reducer.gameStatus);
     const isFinished = useSelector(state => state.reducer.isFinished);
 
+    const [time, setTime] = useState(0);
+    const interval = useRef(null);
+
     useEffect(() => {
         dispatch(startGame(difficulty))
     }, []);
+
+    useEffect(() => {
+        if (!isFinished) {
+            interval.current = setInterval(() => { setTime(time + 1) }, 1000);
+        }
+        return () => clearInterval(interval.current);
+    }, [time, isFinished]);
 
     return (
         <Container>
@@ -104,7 +117,7 @@ export const Game = ({ navigation, route }) => {
                         {isFinished && (gameStatus === GameStatus.WON ? <Title>💯</Title> : <Title>💩</Title>)}
 
                     </TouchableOpacity>
-                    <Counter><Text>00:00</Text></Counter>
+                    <Counter><Text>{formatTime(Math.floor(time / 60))}:{formatTime(time % 60)}</Text></Counter>
                 </CounterHeader>
                 <Spacer size="medium" />
                 <Board />

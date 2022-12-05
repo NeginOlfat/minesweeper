@@ -1,4 +1,4 @@
-import { CellStatus, CellValue } from "./types";
+import { CellStatus, CellValue, GameStatus } from "./types";
 
 const COLSIZE = 10;
 
@@ -115,4 +115,160 @@ const calculateBombsSurrounding = (cells, rowSize) => {
         })
     })
     return newCells;
+};
+
+export const updateCell = (item, cells, rowSize, flag) => {
+
+    let newCells = cells
+    const [rowIndex, colIndex] = item.id.split(":");
+
+    if (item.cellStatus === CellStatus.FLAGGED) {
+        newCells[rowIndex][colIndex].cellStatus = CellStatus.CLOSED;
+        return newCells;
+    } else if (flag && item.cellStatus === CellStatus.CLOSED) {
+        newCells[rowIndex][colIndex].cellStatus = CellStatus.FLAGGED;
+        return newCells;
+    } else if (item.cellValue === CellValue.BOMB) {
+        newCells = cells.map((row, rowIndex) => {
+            return row.map((cell, colIndex) => {
+                if (cell.cellValue === CellValue.BOMB) {
+                    return {
+                        ...cell,
+                        cellStatus: CellStatus.REVEALED
+                    };
+                }
+                return cell;
+            })
+        })
+        return newCells
+    } else if (item.cellValue === CellValue.NONE) {
+        newCells = revealNoneSurrounding(rowIndex, colIndex, newCells, rowSize)
+        return newCells;
+    } else if (item.cellStatus === CellStatus.CLOSED) {
+        newCells[rowIndex][colIndex].cellStatus = CellStatus.REVEALED;
+        return newCells
+    }
+    return cells;
+};
+
+
+const revealNoneSurrounding = (rowIndex, colIndex, cells, rowSize) => {
+
+    const currentCell = cells[rowIndex][colIndex];
+    const row = parseInt(rowIndex)
+    const col = parseInt(colIndex)
+    let newCells = cells
+
+    if (currentCell.cellStatus === CellStatus.REVEALED || currentCell.cellStatus === CellStatus.FLAGGED) {
+        return cells;
+    }
+
+    newCells[rowIndex][colIndex].cellStatus = CellStatus.REVEALED;
+
+    const { topLeftCell, topCell, topRightCell, leftCell, rightCell, bottomLeftCell,
+        bottomCell, bottomRightCell } = adjacentCells(row, col, newCells, rowSize)
+
+    if (topLeftCell?.cellStatus === CellStatus.CLOSED && topLeftCell.cellValue !== CellValue.BOMB) {
+        if (topLeftCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row - 1, col - 1, newCells, rowSize);
+        else
+            newCells[row - 1][col - 1].cellStatus = CellStatus.REVEALED;
+    }
+    if (topCell?.cellStatus === CellStatus.CLOSED && topCell.cellValue !== CellValue.BOMB) {
+        if (topCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row - 1, col, newCells, rowSize);
+        else
+            newCells[row - 1][col].cellStatus = CellStatus.REVEALED;
+    }
+    if (topRightCell?.cellStatus === CellStatus.CLOSED && topRightCell.cellValue !== CellValue.BOMB) {
+        if (topRightCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row - 1, col + 1, newCells, rowSize);
+        else
+            newCells[row - 1][col + 1].cellStatus = CellStatus.REVEALED;
+    }
+    if (leftCell?.cellStatus === CellStatus.CLOSED && leftCell.cellValue !== CellValue.BOMB) {
+        if (leftCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row, col - 1, newCells, rowSize);
+        else
+            newCells[row][col - 1].cellStatus = CellStatus.REVEALED;
+
+    }
+    if (rightCell?.CellStatus === CellStatus.CLOSED && rightCell.cellValue !== CellValue.BOMB) {
+        if (rightCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row, col + 1, newCells, rowSize);
+        else
+            newCells[row][col + 1].cellStatus = CellStatus.REVEALED;
+    }
+    if (bottomLeftCell?.cellStatus === CellStatus.CLOSED && bottomLeftCell.cellValue !== CellValue.BOMB) {
+        if (bottomLeftCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row + 1, col - 1, newCells, rowSize);
+        else
+            newCells[row + 1][col - 1].cellStatus = CellStatus.REVEALED;
+    }
+    if (bottomCell?.cellStatus === CellStatus.CLOSED && bottomCell.cellValue !== CellValue.BOMB) {
+        if (bottomCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row + 1, col, newCells, rowSize)
+        else
+            newCells[row + 1][col].cellStatus = CellStatus.REVEALED;
+    }
+    if (bottomRightCell?.cellStatus === CellStatus.CLOSED && bottomRightCell.cellValue !== CellValue.BOMB) {
+        if (bottomRightCell.cellValue === CellValue.NONE)
+            newCells = revealNoneSurrounding(row + 1, col + 1, newCells, rowSize);
+        else
+            newCells[row + 1][col + 1].cellStatus = CellStatus.REVEALED;
+    }
+    return newCells;
+};
+
+export const getFlagNumber = (cells) => {
+    let flaggedNumber = 0
+    cells.map((row, rowIndex) => {
+        row.map((cell, colIndex) => {
+            if (cell.cellStatus === CellStatus.FLAGGED)
+                flaggedNumber++;
+        })
+    })
+    return flaggedNumber;
+};
+
+export const setGameStatus = (cells) => {
+    const flatCells = cells.flat()
+    const bombCells = flatCells.filter(x => x.cellValue === CellValue.BOMB)
+    const revealedBombCell = bombCells.find(x => x.cellStatus === CellStatus.REVEALED)
+    const flaggedBombCells = bombCells.every(x => x.cellStatus === CellStatus.FLAGGED)
+    const isAllRevealed = flatCells.every(cell => cell.cellStatus === CellStatus.REVEALED ||
+        cell.cellStatus === CellStatus.FLAGGED)
+
+    if (revealedBombCell)
+        return GameStatus.LOST
+    else if (flaggedBombCells && isAllRevealed)
+        return GameStatus.WON
+    else
+        return null
+};
+
+export const checkFinish = (cells) => {
+    const flatCells = cells.flat()
+    const bombCells = flatCells.filter(x => x.cellValue === CellValue.BOMB)
+    const revealedBombCell = bombCells.find(x => x.cellStatus === CellStatus.REVEALED)
+    if (revealedBombCell)
+        return true
+    else
+        return false
+};
+
+export const showCells = (cells) => {
+    let newCells = [];
+    newCells = cells.map((row, rowIndex) => {
+        return row.map((cell, colIndex) => {
+            if (cell.cellValue !== CellValue.REVEALED) {
+                return {
+                    ...cell,
+                    cellStatus: CellStatus.REVEALED
+                };
+            }
+            return cell;
+        })
+    })
+    return newCells
 };

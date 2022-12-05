@@ -3,10 +3,11 @@ import { StatusBar, SafeAreaView, Pressable, Text, TouchableOpacity } from "reac
 import styled from "styled-components/native";
 import { useDispatch, useSelector } from "react-redux";
 
-import { startGame } from "../actions/action";
+import { changeFlag, startGame } from "../actions/action";
 import { Board } from "../components/board/board";
 import { Spacer } from "../components/utility/spacer";
 import { colors } from "../theme/colors";
+import { GameStatus } from "../utils/types";
 
 
 const Container = styled(SafeAreaView)`
@@ -68,7 +69,14 @@ const Counter = styled.View`
 export const Game = ({ navigation, route }) => {
 
     const difficulty = route.params.difficulty;
+
     const dispatch = useDispatch();
+
+    const flag = useSelector(state => state.reducer.flag);
+    const flagNumber = useSelector(state => state.reducer.flagNumber);
+    const bombNumber = useSelector(state => state.reducer.bombNumber);
+    const gameStatus = useSelector(state => state.reducer.gameStatus);
+    const isFinished = useSelector(state => state.reducer.isFinished);
 
     useEffect(() => {
         dispatch(startGame(difficulty))
@@ -86,20 +94,23 @@ export const Game = ({ navigation, route }) => {
                 <Title>{difficulty} GAME</Title>
                 <Spacer size="large" />
                 <CounterHeader>
-                    <Counter><Text>10</Text></Counter>
+                    <Counter><Text>{bombNumber - flagNumber}</Text></Counter>
                     <TouchableOpacity
                         onPress={() =>
-                            console.log("pressed")
+                            dispatch(changeFlag())
                         }
                     >
-                        <Image source={require("../../assets/flag.png")} />
+                        {!isFinished && (flag ? <Title>😱</Title> : <Image source={require("../../assets/flag.png")} />)}
+                        {isFinished && (gameStatus === GameStatus.WON ? <Title>💯</Title> : <Title>💩</Title>)}
+
                     </TouchableOpacity>
                     <Counter><Text>00:00</Text></Counter>
                 </CounterHeader>
                 <Spacer size="medium" />
                 <Board />
                 <Spacer size="xxl" />
-                <Title> YOU LOST</Title>
+                {gameStatus === GameStatus.LOST && < Title > YOU LOST</Title>}
+                {gameStatus === GameStatus.WON && < Title > YOU WON</Title>}
             </Content>
         </Container>
     );
